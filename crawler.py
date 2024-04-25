@@ -1175,8 +1175,49 @@ def crawl_category(category_index: int):
                                 continue
 
                             # scrap product
+                            product_path = os.path.join(page_dir, f"{i}.json")
+                            if os.path.isfile(product_path):
+                                log_inf(f"product {i} is already done")
+                                continue
+
+                            tmp_path = product_path + ".tmp"
+                            product = {}
+
+                            # product name
+                            name_elem = soup.select_one("h1")
+                            product["name"] = name_elem.text.strip() if name_elem != None else "#"
+
+                            # description
+                            desc_elem = soup.select_one("div[data-testid=hero-section]>script")
+                            if desc_elem != None:
+                                product["desc"] = json.loads(desc_elem.text)["mainEntity"][0]["acceptedAnswer"]["text"]
+                            else:
+                                product["desc"] = "#"
+
+                            # rating score & review count
+                            rating_elem = soup.select_one("span.sb.type-40.star-rating-label")
+                            if rating_elem != None:
+                                rating_str = rating_elem.text.strip()
+                                product["rating_score"] = float(rating_str.split("(", 1)[0].strip())
+                                product["review_count"] = int(rating_str.split("(", 1)[1].split(")")[0].strip())
+                            else:
+                                product["rating_score"] = 0.0
+                                product["review_count"] = 0
+
+                            # url
+                            product["url"] = product_link
+
+                            # recommendation percentage
                             
 
+                            # reviews
+
+                            # category link
+                            product["category_url"] = category_link
+
+                            with open(tmp_path, "w") as file:
+                                json.dump(product, file)
+                            os.rename(tmp_path, product_path)
                         mark_as_done(page_dir)
                 else:
                     log_err("product count elem is none.")
