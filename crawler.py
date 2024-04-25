@@ -1033,11 +1033,6 @@ CATEGORY_LIST = [
 TOTAL_CATEGORY_COUNT = len(CATEGORY_LIST)
 
 
-def gen_page_url(page_index: int) -> str:
-    page_link = f"https://www.hwk-koeln.de/betriebe/suche-32,0,bdbsearch.html?limit={PAGE_SIZE}&search-searchterm=&search-job=&search-local=&search-filter-zipcode=50667&search-filter-latitude=50.941389&search-filter-longitude=6.953611&search-filter-radius=250&search-filter-jobnr=&search-filter-experience=&offset={page_index * PAGE_SIZE}"
-    return page_link
-
-
 def mark_as_done(dir_path: str):
     try:
         with open(os.path.join(dir_path, DONE_MARKER_NAME), "w") as f:
@@ -1132,7 +1127,7 @@ def crawl_category(category_index: int):
         category_name = category_str.split(">", 1)[0].split(".", 1)[1].strip()
         category_link = category_str.split(">", 1)[1].strip()
 
-        category_dir = os.path.join(OUTPUT_DIR, ("%03d.%s" % (category_index, category_name)))
+        category_dir = os.path.join(OUTPUT_DIR, f"{category_index}.{category_name}")
         os.makedirs(category_dir, exist_ok=True)
 
         if is_done(category_dir):
@@ -1147,11 +1142,32 @@ def crawl_category(category_index: int):
                 if product_count_elem != None:
                     product_count = product_count_elem.text.split("(", 1)[1].split(")")[0].strip()
                     product_count = int(product_count)
-                    page_count = product_count / PAGE_SIZE
 
-                    for i in range(page_count):
+                    # loop pages
+                    page_count = int((product_count + PAGE_SIZE - 1) / PAGE_SIZE)
+                    for page_index in range(page_count):
+                        page_dir = os.path.join(category_dir, f"{page_index}")
+                        os.makedirs(page_dir, exist_ok=True)
+
+                        if is_done(page_dir):
+                            log_inf(f"page {page_index} is already done")
+                            continue
+
+                        if page_index > 0:
+                            page_link = category_link + f"?page={page_index+1}"
+                            log_inf(f"page {page_index} > {page_link}")
+                            soup = fetch(page_link)
+                        else:
+                            log_inf("page 0")
+
+                        if soup == None:
+                            log_err(f"failed fetch page {page_index}")
+                            continue
+
+                        # loop products
                         
 
+                        mark_as_done(page_dir)
                 else:
                     log_err("product count elem is none.")
             else:
