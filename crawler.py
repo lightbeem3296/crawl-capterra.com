@@ -1155,17 +1155,27 @@ def crawl_category(category_index: int):
 
                         if page_index > 0:
                             page_link = category_link + f"?page={page_index+1}"
-                            log_inf(f"page {page_index} > {page_link}")
+                            log_inf(f"page {page_index} / {page_count} > {page_link}")
                             soup = fetch(page_link)
                         else:
-                            log_inf("page 0")
+                            log_inf(f"page 0 / {page_count}")
 
                         if soup == None:
                             log_err(f"failed fetch page {page_index}")
                             continue
 
                         # loop products
-                        
+                        product_link_elems = soup.select("div.pr-xl.justify-start>a")
+                        for i, product_link_elem in enumerate(product_link_elems):
+                            product_link = product_link_elem.attrs["href"]
+                            log_inf(f"product {i} > {product_link}")
+                            soup = fetch(product_link)
+                            if soup is None:
+                                log_err("failed fetch product page")
+                                continue
+
+                            # scrap product
+                            
 
                         mark_as_done(page_dir)
                 else:
