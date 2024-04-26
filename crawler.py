@@ -1050,13 +1050,13 @@ def is_done(dir_path: str) -> bool:
     return ret
 
 
-def get_cookie(url: str) -> Optional[str]:
+def get_cookie(url: str, wait_elem_selector: str) -> Optional[str]:
     cookie_header = None
     if CHROME != None:
         CHROME.clear_cookie()
         while not CHROME.goto(
             url2go=url,
-            wait_elem_selector=".searchhit-result",
+            wait_elem_selector=wait_elem_selector,
             wait_timeout=300.0,
         ):
             pass
@@ -1081,7 +1081,7 @@ def get_cookie(url: str) -> Optional[str]:
     return cookie_header
 
 
-def fetch(url: str, delay: float = 1.0) -> Optional[BeautifulSoup]:
+def fetch(url: str, delay: float = 0.0) -> Optional[BeautifulSoup]:
     global COOKIE
 
     ret = None
@@ -1096,23 +1096,96 @@ def fetch(url: str, delay: float = 1.0) -> Optional[BeautifulSoup]:
                     url,
                     headers={
                         "Cookie": COOKIE,
+                        "Sec-Ch-Ua": '"Chromium";v="121", "Not A(Brand";v="99"',
+                        "Sec-Ch-Ua-Mobile": "?0",
+                        "Sec-Ch-Ua-Platform": '"Windows"',
+                        "Upgrade-Insecure-Requests": "1",
                         "User-Agent": USER_AGENT,
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                        "Sec-Fetch-Site": "same-origin",
+                        "Sec-Fetch-Mode": "navigate",
+                        "Sec-Fetch-User": "?1",
+                        "Sec-Fetch-Dest": "document",
+                        "Accept-Encoding": "gzip, deflate",
+                        "Accept-Language": "en-US,en;q=0.9",
+                        "Priority": "u=0, i",
+                        "Connection": "close",
                     },
                     verify=False,
                     timeout=15.0,
                 )
 
                 if resp.status_code == 200:
-                    if "Just a moment..." in resp.text:
-                        log_err("cloudflare")
-                    else:
-                        ret = BeautifulSoup(resp.text, "html.parser")
-                        break
+                    ret = BeautifulSoup(resp.text, "html.parser")
+                    break
                 else:
                     log_err(f"request error: {resp.status_code}")
 
                 log_inf("fetch new cookie")
-                COOKIE = get_cookie(url=url)
+                COOKIE = get_cookie(
+                    url=url,
+                    wait_elem_selector="span.dropdown-trigger.text-primary-base.inline-flex.cursor-pointer.items-baseline.font-semibold",
+                )
+                log_inf(f"cookie > {COOKIE}")
+            except:
+                traceback.print_exc()
+    except:
+        traceback.print_exc()
+    return ret
+
+
+def fetch_reviews2(url: str, delay: float = 0.0) -> any:
+    global COOKIE
+
+    ret = None
+    try:
+        if not url.startswith(BASE_URL):
+            url = BASE_URL + url
+
+        while True:
+            try:
+                time.sleep(delay)
+                resp = requests.post(
+                    url,
+                    headers={
+                        "Cookie": COOKIE,
+                        "Sec-Ch-Ua": '"Chromium";v="128", "Not A(Brand";v="99"',
+                        "Next-Router-State-Tree": "%5B%22%22%2C%7B%22children%22%3A%5B%22(spotlight)%22%2C%7B%22children%22%3A%5B%22p%22%2C%7B%22children%22%3A%5B%5B%22seoId%22%2C%2210019949%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%5B%22slug%22%2C%22VideoExpress%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22reviews%22%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%5D%7D%5D%7D%5D%7D%5D%7D%5D%7D%5D%7D%2Cnull%2Cnull%2Ctrue%5D",
+                        "Sec-Ch-Ua-Mobile": "?0",
+                        "User-Agent": USER_AGENT,
+                        "Content-Type": "text/plain;charset=UTF-8",
+                        "Accept": "text/x-component",
+                        "Accept-Encoding": "gzip, deflate",
+                        "Next-Action": "3a2d6332108300b9ae3be8707d1bcfe7db2c465f",
+                        "Sec-Ch-Ua-Platform": '"Windows"',
+                        "Origin": "https://www.capterra.com",
+                        "Sec-Fetch-Site": "same-origin",
+                        "Sec-Fetch-Mode": "cors",
+                        "Sec-Fetch-Dest": "empty",
+                        "Referer": "https://www.capterra.com/p/10019949/VideoExpress/reviews/",
+                        "Accept-Language": "en-US,en;q=0.9",
+                        "Priority": "u=1, i",
+                    },
+                    data='[{"sort":"MOST_HELPFUL","after":"YXJyYXljb25uZWN0aW9uOjI0"}]',
+                    verify=False,
+                    timeout=15.0,
+                )
+
+                if resp.status_code == 200:
+                    reviews_str = (
+                        '{"textReviews":'
+                        + resp.text.strip().replace("\r", "").split("\n")[-1].split('1:{"textReviews":', 1)[1]
+                    )
+                    ret = json.loads(reviews_str)
+                    break
+                else:
+                    log_err(f"request error: {resp.status_code}")
+
+                log_inf("fetch new cookie")
+                COOKIE = get_cookie(
+                    url=url,
+                    wait_elem_selector="span.dropdown-trigger.text-primary-base.inline-flex.cursor-pointer.items-baseline.font-semibold",
+                )
                 log_inf(f"cookie > {COOKIE}")
             except:
                 traceback.print_exc()
@@ -1165,8 +1238,14 @@ def crawl_category(category_index: int):
                             continue
 
                         # loop products
+                        product_desc_elems = soup.select("div.text-neutral-99.text-md.pb-lg")
                         product_link_elems = soup.select("div.pr-xl.justify-start>a")
                         for i, product_link_elem in enumerate(product_link_elems):
+                            product_path = os.path.join(page_dir, f"{i}.json")
+                            if os.path.isfile(product_path):
+                                log_inf(f"product {i} is already done")
+                                continue
+                            
                             product_link = product_link_elem.attrs["href"]
                             log_inf(f"product {i} > {product_link}")
                             soup = fetch(product_link)
@@ -1175,24 +1254,19 @@ def crawl_category(category_index: int):
                                 continue
 
                             # scrap product
-                            product_path = os.path.join(page_dir, f"{i}.json")
-                            if os.path.isfile(product_path):
-                                log_inf(f"product {i} is already done")
-                                continue
-
                             tmp_path = product_path + ".tmp"
                             product = {}
 
                             # product name
                             name_elem = soup.select_one("h1")
-                            product["name"] = name_elem.text.strip() if name_elem != None else "#"
+                            if name_elem != None:
+                                product["name"] = name_elem.text.strip()
+                            else:
+                                log_err("name elem is none")
+                                product["name"] = None
 
                             # description
-                            desc_elem = soup.select_one("div[data-testid=hero-section]>script")
-                            if desc_elem != None:
-                                product["desc"] = json.loads(desc_elem.text)["mainEntity"][0]["acceptedAnswer"]["text"]
-                            else:
-                                product["desc"] = "#"
+                            product["desc"] = product_desc_elems[i].text.strip()
 
                             # rating score & review count
                             rating_elem = soup.select_one("span.sb.type-40.star-rating-label")
@@ -1201,22 +1275,124 @@ def crawl_category(category_index: int):
                                 product["rating_score"] = float(rating_str.split("(", 1)[0].strip())
                                 product["review_count"] = int(rating_str.split("(", 1)[1].split(")")[0].strip())
                             else:
-                                product["rating_score"] = 0.0
-                                product["review_count"] = 0
+                                product["rating_score"] = None
+                                product["review_count"] = None
 
                             # url
                             product["url"] = product_link
 
                             # recommendation percentage
-                            
+                            product_recommend_elem = soup.select_one(
+                                "div[data-testid=likelihood-section]>div:nth-child(2)>div>progress"
+                            )
+                            if product_recommend_elem != None:
+                                product["recommend"] = float(product_recommend_elem.attrs["value"])
+                            else:
+                                log_err("product recommend elem is none")
+                                product["recommend"] = None
 
-                            # reviews
+                            # reviews 0 ~ 24
+                            product["reviews"] = []
+                            review_link = product_link + "reviews/"
+                            soup = fetch(review_link)
+                            if soup != None:
+                                review_elems = soup.select("div[data-test-id='review-card']")
+                                for review_elem in review_elems:
+                                    review = {}
+
+                                    # user
+                                    user_elem = review_elem.select_one("div.mb-3xs")
+                                    if user_elem != None:
+                                        review["user"] = user_elem.text.strip()
+                                    else:
+                                        log_err("review elem is none")
+                                        review["user"] = None
+
+                                    # title
+                                    title_elem = review_elem.select_one("div.mt-2xl")
+                                    if title_elem != None:
+                                        review["title"] = title_elem.text.strip('"').strip()
+                                    else:
+                                        log_err("title elem is none")
+                                        review["title"] = None
+
+                                    # overall
+                                    overall_elem = review_elem.select_one("div[data-testid=overall-content]")
+                                    if overall_elem != None:
+                                        review["overall"] = overall_elem.text.replace("Overall:", "").strip()
+                                    else:
+                                        log_err("overall elem is none")
+                                        review["overall"] = None
+
+                                    # pros
+                                    pros_elem = review_elem.select_one("div[data-testid=pros-content]")
+                                    if pros_elem != None:
+                                        review["pros"] = pros_elem.text.replace("Pros:", "").strip()
+                                    else:
+                                        log_err("pros elem is none")
+                                        review["pros"] = None
+
+                                    # cons
+                                    cons_elem = review_elem.select_one("div[data-testid=cons-content]")
+                                    if cons_elem != None:
+                                        review["cons"] = cons_elem.text.replace("Cons:", "").strip()
+                                    else:
+                                        log_err("cons elem is none")
+                                        review["cons"] = None
+
+                                    # rating
+                                    rating_elem = review_elem.select_one("span.star-rating-label>span")
+                                    if rating_elem != None:
+                                        review["rating"] = float(rating_elem.text.strip())
+                                    else:
+                                        log_err("rating elem is none")
+                                        review["rating"] = None
+
+                                    # recommend
+                                    recommend_elem = review_elem.select_one("progress")
+                                    if recommend_elem != None:
+                                        review["recommend"] = float(recommend_elem.attrs["value"].strip())
+                                    else:
+                                        log_err("recommend elem is none")
+                                        review["recommend"] = None
+
+                                    product["reviews"].append(review)
+                            else:
+                                log_err("failed fetch review page")
+
+                            # reviews 25 ~ 50
+                            resp_reviews = fetch_reviews2(review_link)["textReviews"]
+                            for resp_review in resp_reviews:
+                                review = {}
+
+                                # user
+                                review["user"] = resp_review["reviewer"]["fullName"]
+
+                                # title
+                                review["title"] = resp_review["title"]
+
+                                # overall
+                                review["overall"] = resp_review["generalComments"]
+
+                                # pros
+                                review["pros"] = resp_review["prosText"]
+
+                                # cons
+                                review["cons"] = resp_review["consText"]
+
+                                # rating
+                                review["rating"] = float(resp_review["overallRating"])
+
+                                # recommend
+                                review["recommend"] = float(resp_review["recommendationRating"])
+
+                                product["reviews"].append(review)
 
                             # category link
                             product["category_url"] = category_link
 
                             with open(tmp_path, "w") as file:
-                                json.dump(product, file)
+                                json.dump(product, file, indent=2)
                             os.rename(tmp_path, product_path)
                         mark_as_done(page_dir)
                 else:
@@ -1243,7 +1419,7 @@ def work(start: int, count: int):
         CHROME = Chrome(
             width=800 + randint(0, 200),
             height=600 + randint(0, 100),
-            user_data_dir=os.path.join(TEMP_DIR, f"profile_{datetime.now().timestamp()}"),
+            user_data_dir=os.path.join(TEMP_DIR, f"profile_{start}_{count}"),
         )
         CHROME.start()
         USER_AGENT = CHROME.run_script("navigator.userAgent")
