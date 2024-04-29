@@ -1422,6 +1422,7 @@ def work(start: int, count: int):
             width=800 + randint(0, 200),
             height=600 + randint(0, 100),
             # user_data_dir=os.path.join(TEMP_DIR, f"profile_{start}_{count}_{datetime.now().timestamp()}"),
+            block_image=True,
             user_data_dir=os.path.join(TEMP_DIR, f"profile_{start}_{count}"),
         )
         CHROME.start()
