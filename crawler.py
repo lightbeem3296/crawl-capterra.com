@@ -1092,21 +1092,23 @@ def fetch(url: str, delay: float = 0.0) -> Optional[BeautifulSoup]:
         while True:
             try:
                 time.sleep(delay)
+
                 resp = requests.get(
                     url,
                     headers={
                         "Cookie": COOKIE,
-                        "Sec-Ch-Ua": '"Chromium";v="121", "Not A(Brand";v="99"',
+                        "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
                         "Sec-Ch-Ua-Mobile": "?0",
                         "Sec-Ch-Ua-Platform": '"Windows"',
                         "Upgrade-Insecure-Requests": "1",
+                        # "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.160 Safari/537.36",
                         "User-Agent": USER_AGENT,
                         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                         "Sec-Fetch-Site": "same-origin",
                         "Sec-Fetch-Mode": "navigate",
                         "Sec-Fetch-User": "?1",
                         "Sec-Fetch-Dest": "document",
-                        "Accept-Encoding": "gzip, deflate",
+                        # "Accept-Encoding": "gzip, deflate",
                         "Accept-Language": "en-US,en;q=0.9",
                         "Priority": "u=0, i",
                         "Connection": "close",
@@ -1149,13 +1151,13 @@ def fetch_reviews2(url: str, delay: float = 0.0) -> any:
                     url,
                     headers={
                         "Cookie": COOKIE,
-                        "Sec-Ch-Ua": '"Chromium";v="128", "Not A(Brand";v="99"',
+                        "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
                         "Next-Router-State-Tree": "%5B%22%22%2C%7B%22children%22%3A%5B%22(spotlight)%22%2C%7B%22children%22%3A%5B%22p%22%2C%7B%22children%22%3A%5B%5B%22seoId%22%2C%2210019949%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%5B%22slug%22%2C%22VideoExpress%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22reviews%22%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%5D%7D%5D%7D%5D%7D%5D%7D%5D%7D%5D%7D%2Cnull%2Cnull%2Ctrue%5D",
                         "Sec-Ch-Ua-Mobile": "?0",
                         "User-Agent": USER_AGENT,
                         "Content-Type": "text/plain;charset=UTF-8",
                         "Accept": "text/x-component",
-                        "Accept-Encoding": "gzip, deflate",
+                        # "Accept-Encoding": "gzip, deflate",
                         "Next-Action": "3a2d6332108300b9ae3be8707d1bcfe7db2c465f",
                         "Sec-Ch-Ua-Platform": '"Windows"',
                         "Origin": "https://www.capterra.com",
@@ -1245,7 +1247,7 @@ def crawl_category(category_index: int):
                             if os.path.isfile(product_path):
                                 log_inf(f"product {i} is already done")
                                 continue
-                            
+
                             product_link = product_link_elem.attrs["href"]
                             log_inf(f"product {i} > {product_link}")
                             soup = fetch(product_link)
@@ -1419,7 +1421,7 @@ def work(start: int, count: int):
         CHROME = Chrome(
             width=800 + randint(0, 200),
             height=600 + randint(0, 100),
-            user_data_dir=os.path.join(TEMP_DIR, f"profile_{start}_{count}"),
+            user_data_dir=os.path.join(TEMP_DIR, f"profile_{start}_{count}_{datetime.now().timestamp()}"),
         )
         CHROME.start()
         USER_AGENT = CHROME.run_script("navigator.userAgent")
