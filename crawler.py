@@ -1072,7 +1072,7 @@ def get_cookie(url: str, wait_elem_selector: str) -> Optional[str]:
 
                 if cookie_header == "":
                     # log_err("Cookie is empty, Retry get cookie")
-                    time.sleep(1)
+                    time.sleep(3)
                 else:
                     break
             else:
@@ -1109,13 +1109,13 @@ def fetch(url: str, delay: float = 0.0) -> Optional[BeautifulSoup]:
                         "Sec-Fetch-Mode": "navigate",
                         "Sec-Fetch-User": "?1",
                         "Sec-Fetch-Dest": "document",
-                        # "Accept-Encoding": "gzip, deflate",
+                        "Accept-Encoding": "gzip, deflate",
                         "Accept-Language": "en-US,en;q=0.9",
                         "Priority": "u=0, i",
                         "Connection": "close",
                     },
                     verify=False,
-                    timeout=30.0,
+                    timeout=15.0,
                 )
 
                 if resp.status_code == 200:
@@ -1158,7 +1158,7 @@ def fetch_reviews2(url: str, delay: float = 0.0) -> any:
                         "User-Agent": USER_AGENT,
                         "Content-Type": "text/plain;charset=UTF-8",
                         "Accept": "text/x-component",
-                        # "Accept-Encoding": "gzip, deflate",
+                        "Accept-Encoding": "gzip, deflate",
                         "Next-Action": "3a2d6332108300b9ae3be8707d1bcfe7db2c465f",
                         "Sec-Ch-Ua-Platform": '"Windows"',
                         "Origin": "https://www.capterra.com",
@@ -1295,7 +1295,7 @@ def crawl_category(category_index: int):
                                 product["recommend"] = None
 
                             product["reviews"] = []
-                            if product["review_count"] in [None, 0]:
+                            if not product["review_count"] in [None, 0]:
                                 # reviews 0 ~ 24
                                 review_link = product_link + "reviews/"
                                 soup = fetch(review_link)

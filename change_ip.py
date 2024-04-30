@@ -10,7 +10,7 @@ import requests
 
 from liblogger import log_err, log_inf
 
-CHANGE_INTERVAL = 300.0
+CHANGE_INTERVAL = 120.0
 SERVER_LIST_URL = "http://www.vpngate.net/api/iphone/"
 SERVER_IP_HISTORY = []
 SERVER_LIST = []
