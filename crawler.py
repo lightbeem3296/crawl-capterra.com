@@ -1057,9 +1057,10 @@ def get_cookie(url: str, wait_elem_selector: str) -> Optional[str]:
         while not CHROME.goto(
             url2go=url,
             wait_elem_selector=wait_elem_selector,
-            wait_timeout=300.0,
+            wait_timeout=60.0,
         ):
             pass
+        CHROME.run_script("location.reload();")
 
         while True:
             cookies = CHROME.cookie(COOKIE_DOMAIN)
