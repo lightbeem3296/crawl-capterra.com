@@ -1053,14 +1053,14 @@ def is_done(dir_path: str) -> bool:
 def get_cookie(url: str, wait_elem_selector: str) -> Optional[str]:
     cookie_header = None
     if CHROME != None:
+        CHROME.run_script("localStorage.clear(); sessionStorage.clear();")
         CHROME.clear_cookie()
         while not CHROME.goto(
             url2go=url,
             wait_elem_selector=wait_elem_selector,
-            wait_timeout=60.0,
+            wait_timeout=30.0,
         ):
             pass
-        CHROME.run_script("location.reload();")
 
         while True:
             cookies = CHROME.cookie(COOKIE_DOMAIN)
@@ -1072,7 +1072,7 @@ def get_cookie(url: str, wait_elem_selector: str) -> Optional[str]:
 
                 if cookie_header == "":
                     # log_err("Cookie is empty, Retry get cookie")
-                    time.sleep(0.1)
+                    time.sleep(1)
                 else:
                     break
             else:
@@ -1115,7 +1115,7 @@ def fetch(url: str, delay: float = 0.0) -> Optional[BeautifulSoup]:
                         "Connection": "close",
                     },
                     verify=False,
-                    timeout=15.0,
+                    timeout=30.0,
                 )
 
                 if resp.status_code == 200:
@@ -1294,102 +1294,103 @@ def crawl_category(category_index: int):
                                 log_err("product recommend elem is none")
                                 product["recommend"] = None
 
-                            # reviews 0 ~ 24
                             product["reviews"] = []
-                            review_link = product_link + "reviews/"
-                            soup = fetch(review_link)
-                            if soup != None:
-                                review_elems = soup.select("div[data-test-id='review-card']")
-                                for review_elem in review_elems:
+                            if product["review_count"] in [None, 0]:
+                                # reviews 0 ~ 24
+                                review_link = product_link + "reviews/"
+                                soup = fetch(review_link)
+                                if soup != None:
+                                    review_elems = soup.select("div[data-test-id='review-card']")
+                                    for review_elem in review_elems:
+                                        review = {}
+
+                                        # user
+                                        user_elem = review_elem.select_one("div.mb-3xs")
+                                        if user_elem != None:
+                                            review["user"] = user_elem.text.strip()
+                                        else:
+                                            log_err("review elem is none")
+                                            review["user"] = None
+
+                                        # title
+                                        title_elem = review_elem.select_one("div.mt-2xl")
+                                        if title_elem != None:
+                                            review["title"] = title_elem.text.strip('"').strip()
+                                        else:
+                                            log_err("title elem is none")
+                                            review["title"] = None
+
+                                        # overall
+                                        overall_elem = review_elem.select_one("div[data-testid=overall-content]")
+                                        if overall_elem != None:
+                                            review["overall"] = overall_elem.text.replace("Overall:", "").strip()
+                                        else:
+                                            log_err("overall elem is none")
+                                            review["overall"] = None
+
+                                        # pros
+                                        pros_elem = review_elem.select_one("div[data-testid=pros-content]")
+                                        if pros_elem != None:
+                                            review["pros"] = pros_elem.text.replace("Pros:", "").strip()
+                                        else:
+                                            log_err("pros elem is none")
+                                            review["pros"] = None
+
+                                        # cons
+                                        cons_elem = review_elem.select_one("div[data-testid=cons-content]")
+                                        if cons_elem != None:
+                                            review["cons"] = cons_elem.text.replace("Cons:", "").strip()
+                                        else:
+                                            log_err("cons elem is none")
+                                            review["cons"] = None
+
+                                        # rating
+                                        rating_elem = review_elem.select_one("span.star-rating-label>span")
+                                        if rating_elem != None:
+                                            review["rating"] = float(rating_elem.text.strip())
+                                        else:
+                                            log_err("rating elem is none")
+                                            review["rating"] = None
+
+                                        # recommend
+                                        recommend_elem = review_elem.select_one("progress")
+                                        if recommend_elem != None:
+                                            review["recommend"] = float(recommend_elem.attrs["value"].strip())
+                                        else:
+                                            log_err("recommend elem is none")
+                                            review["recommend"] = None
+
+                                        product["reviews"].append(review)
+                                else:
+                                    log_err("failed fetch review page")
+
+                                # reviews 25 ~ 50
+                                resp_reviews = fetch_reviews2(review_link)["textReviews"]
+                                for resp_review in resp_reviews:
                                     review = {}
 
                                     # user
-                                    user_elem = review_elem.select_one("div.mb-3xs")
-                                    if user_elem != None:
-                                        review["user"] = user_elem.text.strip()
-                                    else:
-                                        log_err("review elem is none")
-                                        review["user"] = None
+                                    review["user"] = resp_review["reviewer"]["fullName"]
 
                                     # title
-                                    title_elem = review_elem.select_one("div.mt-2xl")
-                                    if title_elem != None:
-                                        review["title"] = title_elem.text.strip('"').strip()
-                                    else:
-                                        log_err("title elem is none")
-                                        review["title"] = None
+                                    review["title"] = resp_review["title"]
 
                                     # overall
-                                    overall_elem = review_elem.select_one("div[data-testid=overall-content]")
-                                    if overall_elem != None:
-                                        review["overall"] = overall_elem.text.replace("Overall:", "").strip()
-                                    else:
-                                        log_err("overall elem is none")
-                                        review["overall"] = None
+                                    review["overall"] = resp_review["generalComments"]
 
                                     # pros
-                                    pros_elem = review_elem.select_one("div[data-testid=pros-content]")
-                                    if pros_elem != None:
-                                        review["pros"] = pros_elem.text.replace("Pros:", "").strip()
-                                    else:
-                                        log_err("pros elem is none")
-                                        review["pros"] = None
+                                    review["pros"] = resp_review["prosText"]
 
                                     # cons
-                                    cons_elem = review_elem.select_one("div[data-testid=cons-content]")
-                                    if cons_elem != None:
-                                        review["cons"] = cons_elem.text.replace("Cons:", "").strip()
-                                    else:
-                                        log_err("cons elem is none")
-                                        review["cons"] = None
+                                    review["cons"] = resp_review["consText"]
 
                                     # rating
-                                    rating_elem = review_elem.select_one("span.star-rating-label>span")
-                                    if rating_elem != None:
-                                        review["rating"] = float(rating_elem.text.strip())
-                                    else:
-                                        log_err("rating elem is none")
-                                        review["rating"] = None
+                                    review["rating"] = float(resp_review["overallRating"])
 
                                     # recommend
-                                    recommend_elem = review_elem.select_one("progress")
-                                    if recommend_elem != None:
-                                        review["recommend"] = float(recommend_elem.attrs["value"].strip())
-                                    else:
-                                        log_err("recommend elem is none")
-                                        review["recommend"] = None
+                                    review["recommend"] = float(resp_review["recommendationRating"])
 
                                     product["reviews"].append(review)
-                            else:
-                                log_err("failed fetch review page")
-
-                            # reviews 25 ~ 50
-                            resp_reviews = fetch_reviews2(review_link)["textReviews"]
-                            for resp_review in resp_reviews:
-                                review = {}
-
-                                # user
-                                review["user"] = resp_review["reviewer"]["fullName"]
-
-                                # title
-                                review["title"] = resp_review["title"]
-
-                                # overall
-                                review["overall"] = resp_review["generalComments"]
-
-                                # pros
-                                review["pros"] = resp_review["prosText"]
-
-                                # cons
-                                review["cons"] = resp_review["consText"]
-
-                                # rating
-                                review["rating"] = float(resp_review["overallRating"])
-
-                                # recommend
-                                review["recommend"] = float(resp_review["recommendationRating"])
-
-                                product["reviews"].append(review)
 
                             # category link
                             product["category_url"] = category_link

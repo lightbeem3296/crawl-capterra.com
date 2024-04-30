@@ -1,5 +1,7 @@
 import base64
 import os
+import random
+import subprocess
 import time
 import traceback
 from pathlib import Path
@@ -8,8 +10,7 @@ import requests
 
 from liblogger import log_err, log_inf
 
-CHANGE_INTERVAL = 60.0
-COUNTRY = "KR"
+CHANGE_INTERVAL = 300.0
 SERVER_LIST_URL = "http://www.vpngate.net/api/iphone/"
 SERVER_IP_HISTORY = []
 SERVER_LIST = []
@@ -62,6 +63,8 @@ def fetch_servers():
                     "OpenVPN_ConfigData_Base64": OpenVPN_ConfigData_Base64,
                 }
                 SERVER_LIST.append(server)
+            SERVER_LIST = SERVER_LIST[: len(SERVER_LIST) >> 1]
+            SERVER_LIST = random.sample(SERVER_LIST, len(SERVER_LIST))
         else:
             log_err(f"resp error: {resp.status_code}")
     except:
@@ -70,6 +73,7 @@ def fetch_servers():
 
 def main():
     try:
+        openvpn_process = None
         while True:
             try:
                 # select server
@@ -85,8 +89,8 @@ def main():
                     log_inf("update server list ...")
                     fetch_servers()
                     for server in SERVER_LIST:
-                        if server["CountryShort"] == COUNTRY:
-                            server_to_connect = server
+                        server_to_connect = server
+                        break
 
                 if server_to_connect == None:
                     log_err("server not found")
@@ -97,8 +101,9 @@ def main():
                     f.write(base64.b64decode(server_to_connect["OpenVPN_ConfigData_Base64"]))
 
                 # connect to server
-                cmdline = f'cmd /c "{OPENVPN_PATH}" --config "{OVPN_FILE_PATH}"'
-                os.system(cmdline)
+                if openvpn_process != None:
+                    openvpn_process.kill()
+                openvpn_process = subprocess.Popen([OPENVPN_PATH, "--config", OVPN_FILE_PATH])
 
                 # delay
                 log_inf(f"delay for {CHANGE_INTERVAL} secs ...")
@@ -110,12 +115,10 @@ def main():
 
 
 def test():
-    cmdline = f'cmd /c "{OPENVPN_PATH}" --config "{OVPN_FILE_PATH}"'
-    os.system(cmdline)
-
+    subprocess.run([OPENVPN_PATH, "--config", OVPN_FILE_PATH])
 
 
 if __name__ == "__main__":
-    # main()
-    test()
+    main()
+    # test()
     input("Press ENTER to exit.")

@@ -133,9 +133,6 @@ class Chrome:
             if self.__init_url != "":
                 cmd.append(self.__init_url)
 
-            # user_agent = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{randint(90, 120)}.{randint(0, 100)}.{randint(0, 100)}.{randint(0, 100)} Safari/537.{randint(0, 100)} Edg/{randint(90, 120)}.0.{randint(1000, 2000)}.{randint(0, 100)}"
-            # cmd.append(f"--user-agent={user_agent}")
-
             self.__process = subprocess.Popen(cmd)
 
             # accept
@@ -182,6 +179,7 @@ class Chrome:
                         log_err("timeout")
                         timeout = True
                         break
+                    time.sleep(0.1)
 
             # wait for element valid
             if not timeout:
@@ -195,6 +193,8 @@ class Chrome:
                             log_err("timeout")
                             timeout = True
                             break
+                        time.sleep(0.1)
+
             if not timeout:
                 ret = True
         except:
