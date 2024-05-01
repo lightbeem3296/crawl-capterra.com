@@ -1365,32 +1365,33 @@ def crawl_category(category_index: int):
                                     log_err("failed fetch review page")
 
                                 # reviews 25 ~ 50
-                                resp_reviews = fetch_reviews2(review_link)["textReviews"]
-                                for resp_review in resp_reviews:
-                                    review = {}
+                                if product["review_count"] > 25:
+                                    resp_reviews = fetch_reviews2(review_link)["textReviews"]
+                                    for resp_review in resp_reviews:
+                                        review = {}
 
-                                    # user
-                                    review["user"] = resp_review["reviewer"]["fullName"]
+                                        # user
+                                        review["user"] = resp_review["reviewer"]["fullName"]
 
-                                    # title
-                                    review["title"] = resp_review["title"]
+                                        # title
+                                        review["title"] = resp_review["title"]
 
-                                    # overall
-                                    review["overall"] = resp_review["generalComments"]
+                                        # overall
+                                        review["overall"] = resp_review["generalComments"]
 
-                                    # pros
-                                    review["pros"] = resp_review["prosText"]
+                                        # pros
+                                        review["pros"] = resp_review["prosText"]
 
-                                    # cons
-                                    review["cons"] = resp_review["consText"]
+                                        # cons
+                                        review["cons"] = resp_review["consText"]
 
-                                    # rating
-                                    review["rating"] = float(resp_review["overallRating"])
+                                        # rating
+                                        review["rating"] = float(resp_review["overallRating"])
 
-                                    # recommend
-                                    review["recommend"] = float(resp_review["recommendationRating"])
+                                        # recommend
+                                        review["recommend"] = float(resp_review["recommendationRating"])
 
-                                    product["reviews"].append(review)
+                                        product["reviews"].append(review)
 
                             # category link
                             product["category_url"] = category_link
