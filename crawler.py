@@ -19,7 +19,6 @@ from liblogger import log_err, log_inf
 urllib3.disable_warnings()
 
 COOKIE = ""
-USER_AGENT = ""
 
 CUR_DIR = str(Path(__file__).parent.absolute())
 TEMP_DIR = os.path.join(CUR_DIR, "temp")
@@ -1058,9 +1057,10 @@ def get_cookie(url: str, wait_elem_selector: str) -> Optional[str]:
         while not CHROME.goto(
             url2go=url,
             wait_elem_selector=wait_elem_selector,
-            wait_timeout=30.0,
+            wait_timeout=300.0,
         ):
-            pass
+            CHROME.run_script("localStorage.clear(); sessionStorage.clear();")
+            CHROME.clear_cookie()
 
         while True:
             cookies = CHROME.cookie(COOKIE_DOMAIN)
@@ -1094,6 +1094,7 @@ def fetch(url: str, delay: float = 0.0) -> Optional[BeautifulSoup]:
             try:
                 time.sleep(delay)
 
+                user_agent = CHROME.run_script("navigator.userAgent")
                 resp = requests.get(
                     url,
                     headers={
@@ -1103,7 +1104,7 @@ def fetch(url: str, delay: float = 0.0) -> Optional[BeautifulSoup]:
                         "Sec-Ch-Ua-Platform": '"Windows"',
                         "Upgrade-Insecure-Requests": "1",
                         # "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.6167.160 Safari/537.36",
-                        "User-Agent": USER_AGENT,
+                        "User-Agent": user_agent,
                         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                         "Sec-Fetch-Site": "same-origin",
                         "Sec-Fetch-Mode": "navigate",
@@ -1148,6 +1149,7 @@ def fetch_reviews2(url: str, delay: float = 0.0) -> any:
         while True:
             try:
                 time.sleep(delay)
+                user_agent = CHROME.run_script("navigator.userAgent")
                 resp = requests.post(
                     url,
                     headers={
@@ -1155,7 +1157,7 @@ def fetch_reviews2(url: str, delay: float = 0.0) -> any:
                         "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
                         "Next-Router-State-Tree": "%5B%22%22%2C%7B%22children%22%3A%5B%22(spotlight)%22%2C%7B%22children%22%3A%5B%22p%22%2C%7B%22children%22%3A%5B%5B%22seoId%22%2C%2210019949%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%5B%22slug%22%2C%22VideoExpress%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22reviews%22%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%5D%7D%5D%7D%5D%7D%5D%7D%5D%7D%5D%7D%2Cnull%2Cnull%2Ctrue%5D",
                         "Sec-Ch-Ua-Mobile": "?0",
-                        "User-Agent": USER_AGENT,
+                        "User-Agent": user_agent,
                         "Content-Type": "text/plain;charset=UTF-8",
                         "Accept": "text/x-component",
                         "Accept-Encoding": "gzip, deflate",
@@ -1411,7 +1413,7 @@ def crawl_category(category_index: int):
 
 def work(start: int, count: int):
     try:
-        global CHROME, USER_AGENT
+        global CHROME
 
         begin_index = start
         end_index = min(TOTAL_CATEGORY_COUNT, start + count)
@@ -1429,7 +1431,6 @@ def work(start: int, count: int):
             user_data_dir=os.path.join(TEMP_DIR, f"profile_{start}_{count}"),
         )
         CHROME.start()
-        USER_AGENT = CHROME.run_script("navigator.userAgent")
 
         for i in range(begin_index, end_index):
             crawl_category(category_index=i)
