@@ -1116,7 +1116,7 @@ def fetch(url: str, delay: float = 0.0) -> Optional[BeautifulSoup]:
                         "Connection": "close",
                     },
                     verify=False,
-                    timeout=15.0,
+                    timeout=30.0,
                 )
 
                 if resp.status_code == 200:
@@ -1173,7 +1173,7 @@ def fetch_reviews2(url: str, delay: float = 0.0) -> any:
                     },
                     data='[{"sort":"MOST_HELPFUL","after":"YXJyYXljb25uZWN0aW9uOjI0"}]',
                     verify=False,
-                    timeout=15.0,
+                    timeout=30.0,
                 )
 
                 if resp.status_code == 200:
