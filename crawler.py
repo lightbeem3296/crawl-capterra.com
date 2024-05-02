@@ -4,7 +4,6 @@ import json
 import os
 import time
 import traceback
-from datetime import datetime
 from pathlib import Path
 from random import randint
 from typing import Optional
