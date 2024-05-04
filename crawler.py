@@ -1910,35 +1910,40 @@ def get_cookie(url: str, wait_elem_selector: str) -> Optional[str]:
     if CHROME != None:
         CHROME.run_script("localStorage.clear(); sessionStorage.clear();")
         CHROME.clear_cookie()
+
+        fails = 0
         while not CHROME.goto(
             url2go=url,
             wait_elem_selector=wait_elem_selector,
-            wait_timeout=60.0 * 3,
+            wait_timeout=60.0 * 1,
         ):
-            left = CHROME.run_script("window.screenX")
-            top = CHROME.run_script("window.screenY")
-            width = CHROME.run_script("window.outerWidth")
-            height = CHROME.run_script("window.outerHeight")
-            CHROME.quit()
+            fails += 1
+            if fails == 5:
+                fails = 0
 
-            while os.path.isdir(USER_DATA_DIR):
-                try:
-                    os.rename(USER_DATA_DIR, f"{USER_DATA_DIR}.{datetime.now().timestamp()}")
-                    shutil.rmtree(USER_DATA_DIR, ignore_errors=True)
-                except:
-                    traceback.print_exc()
-                time.sleep(1)
+                left = CHROME.run_script("window.screenLeft")
+                top = CHROME.run_script("window.screenTop")
+                width = CHROME.run_script("window.outerWidth")
+                height = CHROME.run_script("window.outerHeight")
+                CHROME.quit()
 
-            CHROME = Chrome(
-                left=left,
-                top=top,
-                width=width,
-                height=height,
-                user_data_dir=USER_DATA_DIR,
-                block_image=True,
-                user_agent=USERAGENT_LIST[randint(0, len(USERAGENT_LIST) - 1)],
-            )
-            CHROME.start()
+                while os.path.isdir(USER_DATA_DIR):
+                    try:
+                        shutil.rmtree(USER_DATA_DIR)
+                    except:
+                        traceback.print_exc()
+                    time.sleep(0.1)
+
+                CHROME = Chrome(
+                    left=left,
+                    top=top,
+                    width=width,
+                    height=height,
+                    user_data_dir=USER_DATA_DIR,
+                    block_image=True,
+                    user_agent=USERAGENT_LIST[randint(0, len(USERAGENT_LIST) - 1)],
+                )
+                CHROME.start()
 
         while True:
             cookies = CHROME.cookie(COOKIE_DOMAIN)
@@ -2303,11 +2308,10 @@ def work(start: int, count: int):
         USER_DATA_DIR = os.path.join(TEMP_DIR, f"profile_{start}_{count}")
         while os.path.isdir(USER_DATA_DIR):
             try:
-                os.rename(USER_DATA_DIR, f"{USER_DATA_DIR}.{datetime.now().timestamp()}")
+                shutil.rmtree(USER_DATA_DIR)
             except:
                 traceback.print_exc()
-            time.sleep(1)
-
+            time.sleep(0.1)
         CHROME = Chrome(
             width=800 + randint(0, 200),
             height=600 + randint(0, 100),
