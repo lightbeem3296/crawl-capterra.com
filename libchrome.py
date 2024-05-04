@@ -34,12 +34,14 @@ class Chrome:
         height: int = 0,
         block_image: bool = False,
         user_data_dir: Optional[str] = None,
+        user_agent: Optional[str] = None,
     ):
         self.__init_url = init_url
         self.__width = width
         self.__height = height
         self.__block_image = block_image
         self.__user_data_dir = user_data_dir
+        self.__user_agent = user_agent
         self.__process = None
         self.__client_unit = None
 
@@ -130,10 +132,14 @@ class Chrome:
             if self.__block_image:
                 cmd.append("--blink-settings=imagesEnabled=false")
 
+            if self.__user_agent != None:
+                cmd.append(f"--user-agent={self.__user_agent}")
+
             if self.__init_url != "":
                 cmd.append(self.__init_url)
 
             self.__process = subprocess.Popen(cmd)
+            time.sleep(5)
 
             # accept
             self.__client_unit = websocket_server.accept()

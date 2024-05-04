@@ -34,7 +34,7 @@ def main():
             log_inf(f"captcha detected at {img_box}")
 
             logo_x, logo_y, _, _ = img_box
-            pyautogui.moveTo(logo_x, logo_y, duration=0.5)
+            pyautogui.moveTo(logo_x, logo_y, duration=0.1)
             pyautogui.mouseDown()
 
             # wait until captcha end

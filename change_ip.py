@@ -1,5 +1,6 @@
 import base64
 import os
+import pyuac
 import random
 import subprocess
 import time
@@ -10,7 +11,7 @@ import requests
 
 from liblogger import log_err, log_inf
 
-CHANGE_INTERVAL = 120.0
+CHANGE_INTERVAL = 60.0 * 30
 SERVER_LIST_URL = "http://www.vpngate.net/api/iphone/"
 SERVER_IP_HISTORY = []
 SERVER_LIST = []
@@ -45,6 +46,14 @@ def fetch_servers():
                     Message,
                     OpenVPN_ConfigData_Base64,
                 ) = server_string.split(",")
+
+                if CountryShort != "KR":
+                    continue
+                if int(Speed) < 1000 * 1000 * 100:
+                    continue
+                if int(Uptime) == 0:
+                    continue
+
                 server = {
                     "HostName": HostName,
                     "IP": IP,
@@ -94,6 +103,7 @@ def main():
 
                 if server_to_connect == None:
                     log_err("server not found")
+                    SERVER_IP_HISTORY = []
                     continue
 
                 # save to config file
@@ -119,6 +129,10 @@ def test():
 
 
 if __name__ == "__main__":
-    main()
-    # test()
+    if not pyuac.isUserAdmin():
+        log_err("Re-launching as admin")
+        pyuac.runAsAdmin()
+    else:
+        main()
+        # test()
     input("Press ENTER to exit.")
