@@ -1913,8 +1913,12 @@ def get_cookie(url: str, wait_elem_selector: str) -> Optional[str]:
         while not CHROME.goto(
             url2go=url,
             wait_elem_selector=wait_elem_selector,
-            wait_timeout=60.0 * 2,
+            wait_timeout=60.0 * 3,
         ):
+            left = CHROME.run_script("window.screenX")
+            top = CHROME.run_script("window.screenY")
+            width = CHROME.run_script("window.outerWidth")
+            height = CHROME.run_script("window.outerHeight")
             CHROME.quit()
 
             while os.path.isdir(USER_DATA_DIR):
@@ -1926,11 +1930,13 @@ def get_cookie(url: str, wait_elem_selector: str) -> Optional[str]:
                 time.sleep(1)
 
             CHROME = Chrome(
-                width=800 + randint(0, 200),
-                height=600 + randint(0, 100),
+                left=left,
+                top=top,
+                width=width,
+                height=height,
                 user_data_dir=USER_DATA_DIR,
                 block_image=True,
-                user_agent=USERAGENT_LIST[randint(0, len(USERAGENT_LIST)-1)]
+                user_agent=USERAGENT_LIST[randint(0, len(USERAGENT_LIST) - 1)],
             )
             CHROME.start()
 
@@ -2307,7 +2313,7 @@ def work(start: int, count: int):
             height=600 + randint(0, 100),
             block_image=True,
             user_data_dir=USER_DATA_DIR,
-            user_agent=USERAGENT_LIST[randint(0, len(USERAGENT_LIST)-1)]
+            user_agent=USERAGENT_LIST[randint(0, len(USERAGENT_LIST) - 1)],
         )
         CHROME.start()
 

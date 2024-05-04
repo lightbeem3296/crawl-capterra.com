@@ -30,6 +30,8 @@ class Chrome:
     def __init__(
         self,
         init_url: str = "http://example.com",
+        left: int = 0,
+        top: int = 0,
         width: int = 0,
         height: int = 0,
         block_image: bool = False,
@@ -37,6 +39,8 @@ class Chrome:
         user_agent: Optional[str] = None,
     ):
         self.__init_url = init_url
+        self.__left = left
+        self.__top = top
         self.__width = width
         self.__height = height
         self.__block_image = block_image
@@ -125,6 +129,9 @@ class Chrome:
             cmd.append(f"--user-data-dir={self.__user_data_dir}")
             if os.path.isdir(ext_dir):
                 cmd.append(f"--load-extension={ext_dir}")
+
+            if self.__left * self.__top != 0:
+                cmd.append(f"--window-position={self.__left},{self.__top}")
 
             if self.__width * self.__height != 0:
                 cmd.append(f"--window-size={self.__width},{self.__height}")

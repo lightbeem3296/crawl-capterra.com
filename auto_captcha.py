@@ -1,5 +1,6 @@
 # pip install opencv_python
 
+import ctypes
 import datetime
 import os
 import time
@@ -17,6 +18,8 @@ CAPTCHA_END_IMG_PATH = os.path.join(CUR_DIR, "captcha_end.png")
 
 def main():
     try:
+        ctypes.windll.kernel32.SetConsoleTitleW("Auto Captcha Resolver")
+
         log_inf("*** move this window for the captcha to be visible")
         log_inf("delay for 5 seconds ...")
         time.sleep(5)
