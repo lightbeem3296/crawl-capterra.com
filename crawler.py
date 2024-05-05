@@ -1918,7 +1918,7 @@ def get_cookie(url: str, wait_elem_selector: str) -> Optional[str]:
             wait_timeout=60.0 * 1,
         ):
             fails += 1
-            if fails == 5:
+            if fails == 3:
                 fails = 0
 
                 left = CHROME.run_script("window.screenLeft")
