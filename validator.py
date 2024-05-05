@@ -3,8 +3,6 @@ import os
 import traceback
 from pathlib import Path
 
-from slugify import slugify
-
 from liblogger import log_err, log_inf
 
 CUR_DIR = str(Path(__file__).parent.absolute())
