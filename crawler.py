@@ -1915,10 +1915,12 @@ def get_cookie(url: str, wait_elem_selector: str) -> Optional[str]:
         while not CHROME.goto(
             url2go=url,
             wait_elem_selector=wait_elem_selector,
-            wait_timeout=60.0 * 1,
+            wait_timeout=60.0 * 2,
         ):
+            CHROME.run_script("localStorage.clear(); sessionStorage.clear();")
+            CHROME.clear_cookie()
             fails += 1
-            if fails == 3:
+            if fails == 2:
                 fails = 0
 
                 left = CHROME.run_script("window.screenLeft")
