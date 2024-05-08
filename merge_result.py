@@ -5,10 +5,11 @@ from pathlib import Path
 
 from slugify import slugify
 
-from liblogger import log_err, log_inf
+from liblogger import log_err, log_inf, log_warn
 
 CUR_DIR = str(Path(__file__).parent.absolute())
-OUTPUT_DIR = os.path.join(CUR_DIR, "output")
+# OUTPUT_DIR = os.path.join(CUR_DIR, "output")
+OUTPUT_DIR = r"C:\Users\alpha\Desktop\capterra.com\output"
 
 from category_list import CATEGORY_LIST, SUBCATEGORY_LIST
 
@@ -53,6 +54,8 @@ def main():
         os.remove(out_db_path)
     conn = sqlite3.connect(out_db_path, timeout=300)
     cur = conn.cursor()
+
+    # create tables
     cur.executescript(create_tables_query)
 
     # load category list
@@ -148,38 +151,72 @@ def main():
                 with open(product_file_path, "r") as f:
                     product = json.load(f)
 
-                    cur.execute(
-                        "INSERT INTO Product(Product_Name, Slug, Description, Rating_Score, Reviews_Count, URL, Recommendation_Percentage) VALUES(?, ?, ?, ?, ?, ?, ?)",
+                    # check the product is new
+                    row = cur.execute(
+                        "SELECT Product_ID FROM Product WHERE Product_Name=? AND Description=? AND Rating_Score=?",
                         (
                             product["name"],
-                            slugify(product["name"]),
                             product["desc"],
                             product["rating_score"],
-                            product["review_count"],
-                            f'https://www.capterra.com{product["url"]}',
-                            product["recommend"],
                         ),
-                    )
-                    product_id = cur.lastrowid
+                    ).fetchone()
 
-                    cur.execute(
-                        "INSERT INTO ProductCategory(Product_ID, Category_ID) VALUES(?, ?)",
-                        (
-                            product_id,
-                            category_id,
-                        ),
-                    )
-
-                    for review in product["reviews"]:
+                    if row != None:
+                        product_id = row[0]
+                        log_warn(f"duplicated product")
+                        if (
+                            cur.execute(
+                                "SELECT * FROM ProductCategory WHERE Product_ID=? AND Category_ID =?",
+                                (
+                                    product_id,
+                                    category_id,
+                                ),
+                            ).fetchone()
+                            == None
+                        ):
+                            cur.execute(
+                                "INSERT INTO ProductCategory(Product_ID, Category_ID) VALUES(?, ?)",
+                                (
+                                    product_id,
+                                    category_id,
+                                ),
+                            )
+                        else:
+                            log_warn("duplicated product & category")
+                    else:
                         cur.execute(
-                            "INSERT INTO Review(User, Content, Rating, Product_ID) VALUES(?, ?, ?, ?)",
+                            "INSERT INTO Product(Product_Name, Slug, Description, Rating_Score, Reviews_Count, URL, Recommendation_Percentage) VALUES(?, ?, ?, ?, ?, ?, ?)",
                             (
-                                review["user"],
-                                f'Overall: {review["overall"]}\nPros: {review["pros"]}\n: Cons: {review["cons"]}',
-                                review["rating"],
-                                product_id,
+                                product["name"],
+                                slugify(product["name"]),
+                                product["desc"],
+                                product["rating_score"],
+                                product["review_count"],
+                                f'https://www.capterra.com{product["url"]}',
+                                product["recommend"],
                             ),
                         )
+                        product_id = cur.lastrowid
+                        for review in product["reviews"]:
+                            cur.execute(
+                                "INSERT INTO Review(User, Content, Rating, Product_ID) VALUES(?, ?, ?, ?)",
+                                (
+                                    review["user"],
+                                    f'Overall: {review["overall"]}\nPros: {review["pros"]}\n: Cons: {review["cons"]}',
+                                    review["rating"],
+                                    product_id,
+                                ),
+                            )
+
+                        # add product_category
+                        cur.execute(
+                            "INSERT INTO ProductCategory(Product_ID, Category_ID) VALUES(?, ?)",
+                            (
+                                product_id,
+                                category_id,
+                            ),
+                        )
+
                 conn.commit()
     conn.commit()
     conn.close()
