@@ -14,6 +14,19 @@ OUTPUT_DIR = r"C:\Users\alpha\Desktop\capterra.com\output"
 from category_list import CATEGORY_LIST, SUBCATEGORY_LIST
 
 
+def ensure_utf8(text: str) -> str:
+    if text == None:
+        return None
+    else:
+        return text.encode(
+            encoding="utf-8",
+            errors="xmlcharrefreplace",
+        ).decode(
+            encoding="utf-8",
+            errors="ignore",
+        )
+
+
 def main():
     create_tables_query = """
     CREATE TABLE IF NOT EXISTS `Category` (
@@ -112,9 +125,9 @@ def main():
         cur.execute(
             "INSERT INTO Category(Category_Name, Parent_Category_Name, Slug) VALUES (?, ?, ?)",
             (
-                category_name,
-                parent_category_name,
-                slug,
+                ensure_utf8(category_name),
+                ensure_utf8(parent_category_name),
+                ensure_utf8(slug),
             ),
         )
     conn.commit()
@@ -187,9 +200,9 @@ def main():
                         cur.execute(
                             "INSERT INTO Product(Product_Name, Slug, Description, Rating_Score, Reviews_Count, URL, Recommendation_Percentage) VALUES(?, ?, ?, ?, ?, ?, ?)",
                             (
-                                product["name"],
-                                slugify(product["name"]),
-                                product["desc"],
+                                ensure_utf8(product["name"]),
+                                slugify(ensure_utf8(product["name"])),
+                                ensure_utf8(product["desc"]),
                                 product["rating_score"],
                                 product["review_count"],
                                 f'https://www.capterra.com{product["url"]}',
@@ -201,8 +214,8 @@ def main():
                             cur.execute(
                                 "INSERT INTO Review(User, Content, Rating, Product_ID) VALUES(?, ?, ?, ?)",
                                 (
-                                    review["user"],
-                                    f'Overall: {review["overall"]}\nPros: {review["pros"]}\n: Cons: {review["cons"]}',
+                                    ensure_utf8(review["user"]),
+                                    ensure_utf8(f'Overall: {review["overall"]}\nPros: {review["pros"]}\n: Cons: {review["cons"]}'),
                                     review["rating"],
                                     product_id,
                                 ),
@@ -221,7 +234,10 @@ def main():
     conn.commit()
     conn.close()
 
+def test():
+    print(ensure_utf8("Kyrylo \ud83d."))
 
 if __name__ == "__main__":
     main()
+    # test()
     input("Press ENTER to exit.")
