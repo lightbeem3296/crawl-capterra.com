@@ -215,7 +215,7 @@ def main():
                                 (
                                     ensure_utf8(review["user"]),
                                     ensure_utf8(
-                                        f'Overall: {review["overall"]}\nPros: {review["pros"]}\n: Cons: {review["cons"]}'
+                                        f'Overall: {review["overall"]}\nPros: {review["pros"]}\nCons: {review["cons"]}'
                                     ),
                                     review["rating"],
                                     product_id,
