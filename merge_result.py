@@ -61,11 +61,9 @@ def main():
     FOREIGN KEY(`Product_ID`) REFERENCES `Product`(`Product_ID`)
     );
     """
-    out_db_path = os.path.join(OUTPUT_DIR, "result.sqlite3")
-    if os.path.isfile(out_db_path):
-        log_inf("old file exists. removing ...")
-        os.remove(out_db_path)
-    conn = sqlite3.connect(out_db_path, timeout=300)
+
+    # initialize memory database
+    conn = sqlite3.connect(":memory:")
     cur = conn.cursor()
 
     # create tables
@@ -121,7 +119,7 @@ def main():
                     break
             if parent_category_name != None:
                 break
-        slug = slugify(category_name)
+        slug = slugify(f"{category_name}")
         cur.execute(
             "INSERT INTO Category(Category_Name, Parent_Category_Name, Slug) VALUES (?, ?, ?)",
             (
@@ -201,7 +199,7 @@ def main():
                             "INSERT INTO Product(Product_Name, Slug, Description, Rating_Score, Reviews_Count, URL, Recommendation_Percentage) VALUES(?, ?, ?, ?, ?, ?, ?)",
                             (
                                 ensure_utf8(product["name"]),
-                                slugify(ensure_utf8(product["name"])),
+                                slugify(f'{ensure_utf8(product["name"])}'),
                                 ensure_utf8(product["desc"]),
                                 product["rating_score"],
                                 product["review_count"],
@@ -215,7 +213,9 @@ def main():
                                 "INSERT INTO Review(User, Content, Rating, Product_ID) VALUES(?, ?, ?, ?)",
                                 (
                                     ensure_utf8(review["user"]),
-                                    ensure_utf8(f'Overall: {review["overall"]}\nPros: {review["pros"]}\n: Cons: {review["cons"]}'),
+                                    ensure_utf8(
+                                        f'Overall: {review["overall"]}\nPros: {review["pros"]}\n: Cons: {review["cons"]}'
+                                    ),
                                     review["rating"],
                                     product_id,
                                 ),
@@ -232,10 +232,21 @@ def main():
 
                 conn.commit()
     conn.commit()
+
+    # save into file
+    out_db_path = os.path.join(OUTPUT_DIR, "result.sqlite3")
+    if os.path.isfile(out_db_path):
+        log_inf("old file exists. removing ...")
+        os.remove(out_db_path)
+
+    cur.execute(f"VACUUM INTO '{out_db_path}'")
+
     conn.close()
+
 
 def test():
     print(ensure_utf8("Kyrylo \ud83d."))
+
 
 if __name__ == "__main__":
     main()
