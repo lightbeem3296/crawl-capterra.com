@@ -174,7 +174,7 @@ def main():
 
                     if row != None:
                         product_id = row[0]
-                        log_warn(f"duplicated product")
+                        # log_warn(f"duplicated product")
                         if (
                             cur.execute(
                                 "SELECT * FROM ProductCategory WHERE Product_ID=? AND Category_ID =?",
@@ -193,7 +193,8 @@ def main():
                                 ),
                             )
                         else:
-                            log_warn("duplicated product & category")
+                            # log_warn("duplicated product & category")
+                            pass
                     else:
                         cur.execute(
                             "INSERT INTO Product(Product_Name, Slug, Description, Rating_Score, Reviews_Count, URL, Recommendation_Percentage) VALUES(?, ?, ?, ?, ?, ?, ?)",
