@@ -1,6 +1,7 @@
 import json
 import os
 import sqlite3
+from hashlib import md5
 from pathlib import Path
 
 from slugify import slugify
@@ -196,11 +197,16 @@ def main():
                             # log_warn("duplicated product & category")
                             pass
                     else:
+                        product_slug = (
+                            slugify(f'{ensure_utf8(product["name"])}')
+                            + "_"
+                            + md5(f"{product['desc']}_{product['rating_score']}".encode()).hexdigest()
+                        )
                         cur.execute(
                             "INSERT INTO Product(Product_Name, Slug, Description, Rating_Score, Reviews_Count, URL, Recommendation_Percentage) VALUES(?, ?, ?, ?, ?, ?, ?)",
                             (
                                 ensure_utf8(product["name"]),
-                                slugify(f'{ensure_utf8(product["name"])}'),
+                                product_slug,
                                 ensure_utf8(product["desc"]),
                                 product["rating_score"],
                                 product["review_count"],
@@ -247,6 +253,7 @@ def main():
 
 def test():
     print(ensure_utf8("Kyrylo \ud83d."))
+    print(md5("123".encode()).hexdigest())
 
 
 if __name__ == "__main__":
